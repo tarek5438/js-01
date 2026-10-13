@@ -527,27 +527,11 @@
             <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">/ 50</span>
         </div>
 
-        <div class="lock-badge">🔒 تم قفل الاختبار - لا يُسمح بإعادة المحاولة من هذا الجهاز</div>
         <p id="firstSubmissionInfo" style="margin-top: 15px; font-weight: 700; color: #334155; font-size: 1rem;"></p>
+        <button style="background: var(--accent); color: #000; border: none; padding: 14px 34px; border-radius: 12px; font-size: 1.1rem; font-weight: 800; cursor: pointer; margin-top: 25px; transition: 0.2s;" onclick="restartQuiz()">إعادة الاختبار من البداية 🔄</button>
     </div>
 
-    <!-- شاشة الحظر المباشر إذا حاول الدخول مرة ثانية -->
-    <div class="locked-view" id="lockedCard" style="display: none;">
-        <div style="font-size: 3.5rem; margin-bottom: 12px;">🚫</div>
-        <h2 style="color: #dc2626; margin-bottom: 10px; font-weight: 900;">لقد قمت بحل هذا الاختبار مسبقاً!</h2>
-        <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 20px;">
-            وفقاً لتعليمات الاختبار، يُسمح لكل طالب بحل الامتحان <strong>مرة واحدة فقط</strong> من كل جهاز.
-        </p>
-
-        <div class="score-circle">
-            <div class="score-num" id="savedFinalScore">0</div>
-            <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">/ 50</span>
-        </div>
-
-        <p id="savedDetails" style="font-weight: 700; color: #1e293b; margin-top: 15px; font-size: 1.05rem;"></p>
-        <div class="lock-badge" style="margin-top: 15px;">🔒 هذا الاختبار مغلق ومكتمل نهائياً</div>
     </div>
-</div>
 
 <!-- Modal فهرس الأسئلة -->
 <div class="modal-overlay" id="indexModal" onclick="closeIndexModalOnOutside(event)">
@@ -1337,36 +1321,20 @@
     let currentIdx = 0;
     let score = 0;
 
-    // فحص القفل الأبدي على الجهاز
-    function checkDeviceLock() {
-        const submission = localStorage.getItem(QUIZ_STORAGE_KEY);
-        if (submission) {
-            const data = JSON.parse(submission);
-            document.getElementById('quizCard').style.display = 'none';
-            document.getElementById('statsBar').style.display = 'none';
-            document.getElementById('resultsCard').style.display = 'none';
+    function loadHighScores() {
+        const storedHigh = localStorage.getItem('js_exam_highscore');
+        const high = storedHigh ? parseInt(storedHigh) : 0;
+        document.getElementById('highScore').innerText = high;
+    }
 
-            const locked = document.getElementById('lockedCard');
-            locked.style.display = 'block';
-            document.getElementById('savedFinalScore').innerText = data.score;
-            document.getElementById('savedDetails').innerHTML = `
-                📌 النتيجة المسجلة: <strong>${data.score} من 50 (${Math.round((data.score/50)*100)}%)</strong><br>
-                🕒 تاريخ وتوقيت التسليم: <strong>${data.date}</strong>
-            `;
+    function saveHighScore(finalScore) {
+        const currentHigh = parseInt(localStorage.getItem('js_exam_highscore') || '0');
+        if (finalScore > currentHigh) {
+            localStorage.setItem('js_exam_highscore', finalScore);
+            document.getElementById('highScore').innerText = finalScore;
             return true;
         }
         return false;
-    }
-
-    function lockQuizPermanently(finalScore) {
-        const submissionData = {
-            score: finalScore,
-            total: 50,
-            date: new Date().toLocaleString('ar-EG', { dateStyle: 'full', timeStyle: 'short' }),
-            completed: true
-        };
-        localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(submissionData));
-        localStorage.setItem('js_exam_highscore', finalScore);
     }
 
     function calculateScore() {
@@ -1583,9 +1551,8 @@
     }
 
     window.onload = function() {
-        if (!checkDeviceLock()) {
-            displayQuestion();
-        }
+        loadHighScores();
+        displayQuestion();
     };
 </script>
 </body>
